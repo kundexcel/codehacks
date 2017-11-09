@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UsersRequest;
+use App\Photo;
 use App\Role;
 use Illuminate\Http\Request;
 
@@ -32,7 +33,7 @@ class AdminUsersController extends Controller
      */
     public function create()
     {
-        //Pull out roled and send to view
+        //Pull out roles and send to view
         $roles = Role::lists('name','id')->all();
 
         return view('admin.users.create', compact('roles'));
@@ -49,13 +50,22 @@ class AdminUsersController extends Controller
         //
         $user = $request->all();
 
-        if(request->file('photo_id')){
-            return "Photo exists";
-    }
+        if($file = $request->file('photo_id')){
 
-        // User::create($user);
+            $name= time(). $file->getClientOriginalName();
 
-        // return redirect('/admin/users');
+            $file->move('images',$name);
+
+            $photo =Photo::create(['file'=>$name]);
+
+            $user['photo_id'] = $photo->id;
+        }
+
+        $user['password'] = bcrypt($request->password);
+
+        User::create($user);
+
+        return redirect('/admin/users');
 
     }
 
